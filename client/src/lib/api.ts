@@ -7,6 +7,9 @@ export async function searchProductByBarcode(barcode: string): Promise<Product |
   try {
     const url = `${NOCODB_BASE_URL}?offset=0&limit=25&where=(barcode,eq,${barcode})`;
     
+    console.log('Searching for barcode:', barcode);
+    console.log('API URL:', url);
+    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -15,16 +18,24 @@ export async function searchProductByBarcode(barcode: string): Promise<Product |
       },
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
     const data: NocodbResponse = await response.json();
+    console.log('API response data:', data);
     
     if (data.list && data.list.length > 0) {
+      console.log('Found product:', data.list[0]);
       return data.list[0];
     }
     
+    console.log('No products found for barcode:', barcode);
     return null;
   } catch (error) {
     console.error('Error searching product by barcode:', error);

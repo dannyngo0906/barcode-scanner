@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Plus, Smartphone } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -24,11 +24,17 @@ export default function Home() {
   const { checkCameraAccess, error: cameraError } = useCameraAccess();
 
   // Query for product search
-  const { isLoading } = useQuery({
+  const { isLoading, data: product, error } = useQuery({
     queryKey: ['product', searchBarcode],
     queryFn: () => searchProductByBarcode(searchBarcode!),
     enabled: !!searchBarcode,
-    onSuccess: (product) => {
+  });
+
+  // Handle query results with useEffect
+  useEffect(() => {
+    if (!searchBarcode) return;
+    
+    if (product !== undefined) {
       if (product) {
         setCurrentProduct(product);
         setCurrentState('product');
@@ -38,14 +44,15 @@ export default function Home() {
         setCurrentState('welcome');
       }
       setSearchBarcode(null);
-    },
-    onError: (error) => {
+    }
+    
+    if (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tìm kiếm sản phẩm.');
       setShowError(true);
       setCurrentState('welcome');
       setSearchBarcode(null);
-    },
-  });
+    }
+  }, [product, error, searchBarcode]);
 
   const handleCameraAction = async () => {
     if (currentState === 'scanner') return;
