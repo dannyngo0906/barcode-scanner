@@ -22,15 +22,17 @@ export function useBarcodeScanner() {
     }
 
     const config = {
-      fps: 120, // Increased from 60 to 120 for faster scanning
-      qrbox: { width: 200, height: 120 }, // Reduced from 250x150 to 200x120 for better performance
+      fps: 60,
+      qrbox: { width: 250, height: 150 },
       aspectRatio: 1.0,
-      // Optimized formats: focus on most common barcode types for faster processing
       formatsToSupport: [
-        window.Html5QrcodeSupportedFormats?.EAN_13, // Most common product barcode
-        window.Html5QrcodeSupportedFormats?.EAN_8,  // Short EAN barcode
-        window.Html5QrcodeSupportedFormats?.CODE_128, // Common industrial barcode
-        window.Html5QrcodeSupportedFormats?.UPC_A,  // US/Canada product barcode
+        window.Html5QrcodeSupportedFormats?.UPC_A,
+        window.Html5QrcodeSupportedFormats?.UPC_E,
+        window.Html5QrcodeSupportedFormats?.EAN_8,
+        window.Html5QrcodeSupportedFormats?.EAN_13,
+        window.Html5QrcodeSupportedFormats?.CODE_128,
+        window.Html5QrcodeSupportedFormats?.CODE_39,
+        window.Html5QrcodeSupportedFormats?.ITF,
       ].filter(Boolean),
     };
 
