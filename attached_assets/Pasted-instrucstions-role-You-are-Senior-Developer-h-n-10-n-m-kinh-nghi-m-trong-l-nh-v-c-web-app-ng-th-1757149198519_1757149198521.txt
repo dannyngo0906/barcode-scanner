@@ -1,0 +1,164 @@
+instrucstions
+# role
+You are Senior Developer hơn 10 năm kinh nghiệm trong lĩnh vực web app. Đồng thời, you are prompt engineer với hơn 5 năm làm việc trong lĩnh vực AI.
+
+# skills
+You know very excellent trong việc sử dụng AI để build các web app phục vụ trong lĩnh vực ecommerce.
+You do giúp tôi xây dựng được 1 web app hoàn chỉnh trên Replit với các nội dung cụ thể như sau:
+
+## requirement
+Hãy tạo một web app quét mã vạch (barcode scanner web app) với các yêu cầu sau:
+
+1. Tính năng chính
+
+Cho phép người dùng quét barcode bằng camera sau trên điện thoại.
+
+Nếu thiết bị không hỗ trợ camera, người dùng có thể nhập barcode thủ công bằng bàn phím.
+
+Sau khi quét hoặc nhập barcode, app sẽ gọi API từ Nocodb với thông tin sau:
+
+Phương thức GET: https://db.salesai.vn/api/v2/tables/m3rrbw0dbrlqogw/records?offset=0&limit=25&where=(barcode,eq,barcodevalue)
+
+Thẻ header gồm: xc-token = 1Owqe7hG7sV0V16DQCv_BPC0gUDLITp-_yRXvLGA
+
+### Ví dụ: 
+GET: https://db.salesai.vn/api/v2/tables/m3rrbw0dbrlqogw/records?offset=0&limit=25&where=(barcode,eq,8935006545885)
+
+
+Kết quả:
+{
+    "list": [
+        {
+            "Id": 10531,
+            "CreatedAt": "2025-08-15 06:30:39+00:00",
+            "UpdatedAt": "2025-09-04 09:08:56+00:00",
+            "product_id": 1069436057,
+            "description": "<p>Nước Tẩy Trang Sạch Sâu Dưỡng Ẩm Hada Labo Micellar Water Hydrating là sản phẩm tẩy trang nổi bật đến từ thương hiệu Hada Labo, một trong những thương hiệu mỹ phẩm hàng đầu Nhật Bản. Sản phẩm này được thiết kế để làm sạch sâu đến 99% lớp trang điểm lâu trôi, kem chống nắng và bụi mịn PM2.5 một cách nhẹ nhàng, không gây khô căng hay kích ứng cho da. Đặc biệt, nước tẩy trang này còn cung cấp độ ẩm tối ưu cho da, giúp ngăn ngừa tình trạng mất nước và tăng cường độ đàn hồi da lên đến 1.5 lần nhờ vào hệ dưỡng ẩm sâu HA. Với công nghệ Micelle Complex, sản phẩm không chỉ làm sạch hiệu quả mà còn dịu nhẹ cho làn da, phù hợp với mọi loại da, kể cả làn da nhạy cảm. Hada Labo Micellar Water Hydrating là lựa chọn hoàn hảo cho những ai tìm kiếm một sản phẩm tẩy trang an toàn và hiệu quả.</p>#####<p><strong>Thông tin sản phẩm:</strong></p><p>Nước Tẩy Trang Sạch Sâu Dưỡng Ẩm Hada Labo Micellar Water Hydrating là sản phẩm tẩy trang dạng micella đến từ thương hiệu Hada Labo nổi tiếng của Nhật Bản. Sản phẩm này giúp làm sạch sâu lớp trang điểm, kem chống nắng và bụi mịn PM2.5 một cách nhẹ nhàng mà không gây khô căng hay kích ứng cho da.</p><p><strong>Đối tượng sử dụng:</strong></p><ul><li>Phù hợp với mọi loại da, đặc biệt là làn da nhạy cảm.</li><li>Thích hợp cho những người cần tẩy trang nhẹ nhàng nhưng vẫn làm sạch sâu lớp trang điểm lâu trôi và bụi bẩn từ môi trường.</li><li>Có thể sử dụng hàng ngày ngay cả khi không trang điểm.</li></ul><p><strong>Bao bì, dung tích, trọng lượng của sản phẩm:</strong></p><p>Sản phẩm được đóng gói trong chai nhỏ gọn với dung tích 40ml, thuận tiện cho việc mang theo hoặc dùng thử.</p><p><strong>Thành phần nổi bật của sản phẩm:</strong></p><p>Sản phẩm chứa các thành phần chính như Water, Dipropylene Glycol, Pentylene Glycol, Poloxamer 184, PEG-8 Caprylic/Capric Glycerides (Micelle Complex), Sodium Dilauramidoglutamide Lysine, Hydrolyzed Hyaluronic Acid (Nano HA), Sodium Acetylated Hyaluronate (Super HA), Sodium Hyaluronate (HA), Alteromonas Ferment Extract, Lactococcus/Hyaluronic Acid Ferment Filtrate (Fermented HA), Eucalyptus Oil, Butylene Glycol, Disodium Succinate, Succinic acid, Disodium EDTA, Phenoxyethanol. Vui lòng xem chi tiết thành phần trên bao bì sản phẩm.</p><p><strong>Hướng dẫn sử dụng sản phẩm:</strong></p><ol><li>Lắc đều chai trước khi dùng.</li><li>Đổ một lượng vừa đủ ra bông tẩy trang.</li><li>Nhẹ nhàng lau sạch mặt, vùng cổ, vùng mắt và môi theo chuyển động tròn cho đến khi bông không còn dính bụi bẩn hay lớp makeup nữa.</li><li>Không cần rửa lại với nước sau khi tẩy trang.</li></ol><p><strong>Lưu ý cách bảo quản:</strong></p><ul><li>Bảo quản sản phẩm ở nơi khô ráo, thoáng mát, tránh ánh nắng mặt trời chiếu trực tiếp.</li><li>Đóng chặt nắp ngay sau khi sử dụng để bảo quản chất lượng sản phẩm.</li><li>Tránh xa tầm tay trẻ em.</li></ul>#####<ul><li>Thương hiệu: Hada Labo (Nhật Bản).</li><li>Công dụng sản phẩm: Làm sạch sâu đến 99% lớp trang điểm lâu trôi, kem chống nắng và bụi mịn PM2.5 một cách nhẹ nhàng mà không gây khô căng hay kích ứng da; cung cấp độ ẩm tối ưu cho da, giúp ngăn ngừa tình trạng mất nước và tăng cường độ đàn hồi da lên đến 1.5 lần nhờ hệ dưỡng ẩm sâu HA; sử dụng công nghệ Micelle Complex giúp làm sạch sâu mà vẫn dịu nhẹ cho da.</li></ul>",
+            "variant_id": "1157767238",
+            "url": "nuoc-tay-trang-sach-sau-duong-am-hada-labo-micellar-water-hydrating-40ml-1",
+            "title": "Nước Tẩy Trang Sạch Sâu, Dưỡng Ẩm Hada Labo Micellar Water Hydrating 40ml",
+            "image": null,
+            "brand": "Hada Labo",
+            "type": "Tẩy Trang",
+            "tag": "Tẩy Trang,Chăm Sóc Da Mặt",
+            "sku": "8935006545885-KOHSD",
+            "barcode": "8935006545885",
+            "sale_price": 29000,
+            "price": 35000,
+            "image_link": "https://cdn.hstatic.net/products/200000977139/da_labo_micellar_water_hydrating_40ml_8db3a05bec04483081f8572aeafac376_1484d9cd173b4001ada80e5de25b7a94.png",
+            "stock": 0,
+            "153 NCT": null,
+            "16 VHT": null,
+            "06 QT": null,
+            "Inbox": null,
+            "Kho tong": null,
+            "published_scope": "global",
+            "label_1": null,
+            "label_2": null,
+            "Viết mô tả": {
+                "type": "webhook",
+                "label": "Button",
+                "fk_webhook_id": "hkr5ikidoz5v2ukg"
+            }
+        },
+        {
+            "Id": 11227,
+            "CreatedAt": "2025-08-15 06:30:57+00:00",
+            "UpdatedAt": "2025-09-06 08:12:39+00:00",
+            "product_id": 1067913816,
+            "description": "<p>Nước Tẩy Trang Sạch Sâu Dưỡng Ẩm Hada Labo Micellar Water Hydrating là sản phẩm tẩy trang nổi bật đến từ thương hiệu Hada Labo, một trong những thương hiệu mỹ phẩm hàng đầu Nhật Bản. Sản phẩm này được thiết kế để làm sạch sâu đến 99% lớp trang điểm lâu trôi, kem chống nắng và bụi mịn PM2.5 một cách nhẹ nhàng, không gây khô căng hay kích ứng cho da. Đặc biệt, nước tẩy trang này còn cung cấp độ ẩm tối ưu cho da, giúp ngăn ngừa tình trạng mất nước và tăng cường độ đàn hồi da lên đến 1.5 lần nhờ vào hệ dưỡng ẩm sâu HA. Với công nghệ Micelle Complex, sản phẩm không chỉ làm sạch hiệu quả mà còn dịu nhẹ cho làn da, phù hợp với mọi loại da, kể cả làn da nhạy cảm. Hada Labo Micellar Water Hydrating là lựa chọn hoàn hảo cho những ai tìm kiếm một sản phẩm tẩy trang an toàn và hiệu quả.</p>#####<p><strong>Thông tin sản phẩm:</strong></p><p>Nước Tẩy Trang Sạch Sâu Dưỡng Ẩm Hada Labo Micellar Water Hydrating là sản phẩm tẩy trang dạng micella đến từ thương hiệu Hada Labo nổi tiếng của Nhật Bản. Sản phẩm này giúp làm sạch sâu lớp trang điểm, kem chống nắng và bụi mịn PM2.5 một cách nhẹ nhàng mà không gây khô căng hay kích ứng cho da.</p><p><strong>Đối tượng sử dụng:</strong></p><ul><li>Phù hợp với mọi loại da, đặc biệt là làn da nhạy cảm.</li><li>Thích hợp cho những người cần tẩy trang nhẹ nhàng nhưng vẫn làm sạch sâu lớp trang điểm lâu trôi và bụi bẩn từ môi trường.</li><li>Có thể sử dụng hàng ngày ngay cả khi không trang điểm.</li></ul><p><strong>Bao bì, dung tích, trọng lượng của sản phẩm:</strong></p><p>Sản phẩm được đóng gói trong chai nhỏ gọn với dung tích 40ml, thuận tiện cho việc mang theo hoặc dùng thử.</p><p><strong>Thành phần nổi bật của sản phẩm:</strong></p><p>Sản phẩm chứa các thành phần chính như Water, Dipropylene Glycol, Pentylene Glycol, Poloxamer 184, PEG-8 Caprylic/Capric Glycerides (Micelle Complex), Sodium Dilauramidoglutamide Lysine, Hydrolyzed Hyaluronic Acid (Nano HA), Sodium Acetylated Hyaluronate (Super HA), Sodium Hyaluronate (HA), Alteromonas Ferment Extract, Lactococcus/Hyaluronic Acid Ferment Filtrate (Fermented HA), Eucalyptus Oil, Butylene Glycol, Disodium Succinate, Succinic acid, Disodium EDTA, Phenoxyethanol. Vui lòng xem chi tiết thành phần trên bao bì sản phẩm.</p><p><strong>Hướng dẫn sử dụng sản phẩm:</strong></p><ol><li>Lắc đều chai trước khi dùng.</li><li>Đổ một lượng vừa đủ ra bông tẩy trang.</li><li>Nhẹ nhàng lau sạch mặt, vùng cổ, vùng mắt và môi theo chuyển động tròn cho đến khi bông không còn dính bụi bẩn hay lớp makeup nữa.</li><li>Không cần rửa lại với nước sau khi tẩy trang.</li></ol><p><strong>Lưu ý cách bảo quản:</strong></p><ul><li>Bảo quản sản phẩm ở nơi khô ráo, thoáng mát, tránh ánh nắng mặt trời chiếu trực tiếp.</li><li>Đóng chặt nắp ngay sau khi sử dụng để bảo quản chất lượng sản phẩm.</li><li>Tránh xa tầm tay trẻ em.</li></ul>#####<ul><li>Thương hiệu: Hada Labo (Nhật Bản).</li><li>Công dụng sản phẩm: Làm sạch sâu đến 99% lớp trang điểm lâu trôi, kem chống nắng và bụi mịn PM2.5 một cách nhẹ nhàng mà không gây khô căng hay kích ứng da; cung cấp độ ẩm tối ưu cho da, giúp ngăn ngừa tình trạng mất nước và tăng cường độ đàn hồi da lên đến 1.5 lần nhờ hệ dưỡng ẩm sâu HA; sử dụng công nghệ Micelle Complex giúp làm sạch sâu mà vẫn dịu nhẹ cho da.</li></ul>",
+            "variant_id": "1154571536",
+            "url": "nuoc-tay-trang-sach-sau-duong-am-hada-labo-micellar-water-hydrating-40ml",
+            "title": "Nước Tẩy Trang Sạch Sâu, Dưỡng Ẩm Hada Labo Micellar Water Hydrating 40ml",
+            "image": null,
+            "brand": "Hada Labo",
+            "type": "Tẩy Trang",
+            "tag": "Tẩy Trang,Chăm Sóc Da Mặt",
+            "sku": "8935006545885",
+            "barcode": "8935006545885",
+            "sale_price": 29000,
+            "price": 35000,
+            "image_link": "https://product.hstatic.net/200000977139/product/c_t_y_trang_s_ch_s_u__d__ng__m_hada_labo_micellar_water_hydrating_40ml_8db3a05bec04483081f8572aeafac376.png",
+            "stock": 13,
+            "153 NCT": 4,
+            "16 VHT": 3,
+            "06 QT": 3,
+            "Inbox": null,
+            "Kho tong": 5,
+            "published_scope": "global",
+            "label_1": null,
+            "label_2": null,
+            "Viết mô tả": {
+                "type": "webhook",
+                "label": "Button",
+                "fk_webhook_id": "hkr5ikidoz5v2ukg"
+            }
+        }
+    ],
+    "pageInfo": {
+        "totalRows": 2,
+        "page": 1,
+        "pageSize": 25,
+        "isFirstPage": true,
+        "isLastPage": true
+    }
+}
+
+Trong đó barcodevalue là giá trị barcode nhận được sau khi quét mã hoặc nhập thủ công trên web app 
+
+Sau khi lấy kết quả từ API, cần làm sạch toàn bộ dữ liệu và hiển thị ra giao diện người dùng một cách đẹp và sinh động và đầy đủ.
+
+2. Giao diện người dùng (UI/UX)
+
+Giao diện responsive: hiển thị tốt trên cả máy tính, tablet, điện thoại.
+
+Thiết kế tương tự trang chi tiết sản phẩm của Boshop.vn, ví dụ:  
+👉 [https://boshop.vn/products/son-tint-li-dior-addict-lip-tint-5ml-unbox-652](https://boshop.vn/products/son-tint-li-dior-addict-lip-tint-5ml-unbox-652)
+
+Cụ thể:
+
+Thanh nhập barcode (input + nút “Quét” / “Nhập”) đặt ở đầu trang.
+
+Khi quét hoặc nhập barcode thành công, hiển thị sản phẩm ở trung tâm màn hình với layout:
+
+Hình ảnh sản phẩm lớn bên trái (hoặc trên cùng ở mobile).
+
+Bên phải là thông tin sản phẩm:
+
+Tên sản phẩm (font lớn, nổi bật).
+
+Barcode (nhỏ hơn, màu xám).
+
+Thương hiệu.
+
+Loại sản phẩm.
+
+Mô tả sản phẩm chi tiết (có thể mở rộng hoặc thu gọn lại)
+
+Giá bán (màu đỏ, nổi bật).
+
+Giá so sánh (gạch ngang, màu xám).
+
+Nút “Quét lại” hoặc “Nhập barcode khác” ở dưới cùng.
+
+3. Công nghệ và yêu cầu kỹ thuật
+
+Sử dụng JavaScript (React hoặc Next.js).
+
+Tích hợp thư viện QuaggaJS hoặc html5-qrcode để quét barcode bằng camera.
+
+Gọi webhook bằng fetch API.
+
+Đảm bảo hiển thị ảnh sản phẩm rõ nét, có thể zoom nếu cần.
+
+Toàn bộ app phải nhẹ, load nhanh, dễ dùng trên mọi thiết bị.
+
+3. Với camera quét barcode
+- Khi bấm vào nút scan cần tự động bật camera sau lên và quét, tự nhận diện số một cách nhanh chóng trên mã vạch.
+- Tốc độ nhanh chóng đến 60fps
+- Chỉ cần gặp mã vạch tự động nhận diện và trả kết quả thông tin sản phẩm nhanh chóng.
+- Phải có 1 đường chạy từ trên xuống để báo hiệu dòng hình ảnh đang chạy để người dùng biết khi nào sẽ quét tới barcode.
+
+# contraints
+You must tạo ra web app có thể hoạt động được một cách trơn tru, chính xác, không gặp lỗi.
+You CAN bổ sung thêm các idea và ý tưởng hay để tối ưu UX/UI người dùng, AI trên camera để nhận diện barcode được chính xác nhất.
