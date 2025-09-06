@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBarcodeScanner } from '@/hooks/use-barcode-scanner';
-import { CameraOverlay } from './camera-overlay';
 
 interface BarcodeScannerProps {
   onScanSuccess: (barcode: string) => void;
