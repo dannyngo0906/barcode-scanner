@@ -24,7 +24,6 @@ export function useBarcodeScanner() {
     const config = {
       fps: 120,
       aspectRatio: 1.0,
-      useBarCodeDetectorIfSupported: true,
       formatsToSupport: [
         window.Html5QrcodeSupportedFormats?.UPC_A,
         window.Html5QrcodeSupportedFormats?.UPC_E,
@@ -36,75 +35,21 @@ export function useBarcodeScanner() {
       ].filter(Boolean),
     };
 
-    // Start with basic camera constraints and add enhancements progressively
-    const basicConstraints = { facingMode: "environment" };
-    
     try {
       scannerRef.current = new window.Html5Qrcode(elementId);
       
-      // Try enhanced constraints first, fallback to basic if failed
-      const tryEnhancedCamera = () => {
-        const enhancedConstraints = {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        };
-        
-        return scannerRef.current.start(
-          enhancedConstraints,
-          config,
-          (decodedText: string) => {
-            onScanSuccess(decodedText);
-          },
-          (errorMessage: string) => {
-            if (onScanError) {
-              onScanError(errorMessage);
-            }
+      scannerRef.current.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText: string) => {
+          onScanSuccess(decodedText);
+        },
+        (errorMessage: string) => {
+          if (onScanError) {
+            onScanError(errorMessage);
           }
-        );
-      };
-      
-      const tryBasicCamera = () => {
-        return scannerRef.current.start(
-          basicConstraints,
-          config,
-          (decodedText: string) => {
-            onScanSuccess(decodedText);
-          },
-          (errorMessage: string) => {
-            if (onScanError) {
-              onScanError(errorMessage);
-            }
-          }
-        );
-      };
-      
-      // Try enhanced camera first, fallback to basic if failed
-      tryEnhancedCamera().then(() => {
-        console.log('Enhanced camera started successfully');
-        // Apply zoom after successful start
-        setTimeout(() => {
-          try {
-            if (scannerRef.current && scannerRef.current.getRunningTrackCapabilities) {
-              const capabilities = scannerRef.current.getRunningTrackCapabilities();
-              if (capabilities && capabilities.zoom) {
-                console.log('Camera zoom support detected, range:', capabilities.zoom.min, '-', capabilities.zoom.max);
-                const optimalZoom = Math.min(2.5, capabilities.zoom.max || 2.0);
-                scannerRef.current.applyVideoConstraints({
-                  advanced: [{ zoom: optimalZoom }]
-                }).catch((error: any) => {
-                  console.log('Auto-zoom setup failed:', error);
-                });
-              }
-            }
-          } catch (error) {
-            console.log('Camera capabilities check failed:', error);
-          }
-        }, 1500);
-      }).catch((error) => {
-        console.log('Enhanced camera failed, trying basic camera:', error);
-        return tryBasicCamera();
-      });
+        }
+      );
     } catch (error) {
       console.error('Error starting scanner:', error);
     }
