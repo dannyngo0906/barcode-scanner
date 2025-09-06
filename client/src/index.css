@@ -123,6 +123,4 @@
   width: 100% !important;
   height: 100vh !important;
   object-fit: cover !important;
-  transform: scale(2) !important;
-  transform-origin: center !important;
 }

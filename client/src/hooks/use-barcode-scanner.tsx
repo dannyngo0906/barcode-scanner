@@ -39,12 +39,7 @@ export function useBarcodeScanner() {
       scannerRef.current = new window.Html5Qrcode(elementId);
       
       scannerRef.current.start(
-        { 
-          facingMode: "environment",
-          advanced: [
-            { zoom: { ideal: 2 } }
-          ]
-        },
+        { facingMode: "environment" },
         config,
         (decodedText: string) => {
           onScanSuccess(decodedText);
