@@ -22,8 +22,7 @@ export function useBarcodeScanner() {
     }
 
     const config = {
-      fps: 60,
-      qrbox: { width: 250, height: 150 },
+      fps: 120,
       aspectRatio: 1.0,
       formatsToSupport: [
         window.Html5QrcodeSupportedFormats?.UPC_A,
