@@ -45,19 +45,38 @@ export function ProductDisplay({ product, onBack, onScanAgain, onEnterNewBarcode
 
         <CardContent className="p-6">
           {/* Product info */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-foreground mb-2" data-testid="product-title">
-                {product.title || 'Không có tên sản phẩm'}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-2" data-testid="product-barcode">
-                {product.barcode}
-              </p>
-              <div className="flex items-center space-x-4 text-sm">
-                <span className="font-medium text-foreground" data-testid="product-brand">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-foreground mb-3" data-testid="product-title">
+              {product.title || 'Không có tên sản phẩm'}
+            </h2>
+            
+            {/* Product details grid */}
+            <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+              <div className="flex items-center">
+                <span className="text-muted-foreground mr-1">•</span>
+                <span className="font-medium text-foreground">Mã sản phẩm:</span>
+                <span className="ml-1 text-muted-foreground" data-testid="product-sku">
+                  {product.sku || product.barcode}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-muted-foreground mr-1">•</span>
+                <span className="font-medium text-foreground">Tình trạng:</span>
+                <span className="ml-1 text-muted-foreground">
+                  {product.stock > 0 ? 'Còn hàng' : 'Hết hàng'}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-muted-foreground mr-1">•</span>
+                <span className="font-medium text-foreground">Thương hiệu:</span>
+                <span className="ml-1 text-muted-foreground" data-testid="product-brand">
                   {product.brand || 'Không rõ thương hiệu'}
                 </span>
-                <span className="text-muted-foreground" data-testid="product-type">
+              </div>
+              <div className="flex items-center">
+                <span className="text-muted-foreground mr-1">•</span>
+                <span className="font-medium text-foreground">Dòng sản phẩm:</span>
+                <span className="ml-1 text-muted-foreground" data-testid="product-type">
                   {product.type || 'Không rõ loại'}
                 </span>
               </div>
@@ -81,43 +100,36 @@ export function ProductDisplay({ product, onBack, onScanAgain, onEnterNewBarcode
             )}
           </div>
 
-          {/* Stock info */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-muted rounded-lg p-3">
-              <p className="text-sm font-medium text-foreground">Tồn kho</p>
-              <p className="text-xl font-bold text-primary" data-testid="product-stock">
-                {product.stock || 0}
-              </p>
-            </div>
-            <div className="bg-muted rounded-lg p-3">
-              <p className="text-sm font-medium text-foreground">Kho tổng</p>
-              <p className="text-xl font-bold text-primary" data-testid="warehouse-stock">
-                {product["Kho tong"] || 0}
-              </p>
-            </div>
-          </div>
 
           {/* Description */}
           {cleanDescription && (
             <div className="mb-6">
-              <Button
-                variant="ghost"
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="flex items-center justify-between w-full text-left p-0 h-auto"
-                data-testid="toggle-description-btn"
-              >
-                <h3 className="text-lg font-semibold text-foreground">Mô tả sản phẩm</h3>
-                {showFullDescription ? (
-                  <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              <h3 className="text-lg font-semibold text-foreground mb-3">Mô tả sản phẩm</h3>
+              <div className="text-muted-foreground text-sm leading-relaxed" data-testid="product-description">
+                <p className={showFullDescription ? '' : 'line-clamp-3'}>
+                  {cleanDescription}
+                </p>
+                {cleanDescription.length > 200 && (
+                  <Button
+                    variant="link"
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="p-0 h-auto mt-2 text-primary text-sm"
+                    data-testid="toggle-description-btn"
+                  >
+                    {showFullDescription ? (
+                      <>
+                        <ChevronUp className="w-4 h-4 mr-1" />
+                        Thu gọn
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-4 h-4 mr-1" />
+                        Xem thêm
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
-              {showFullDescription && (
-                <div className="mt-3 text-muted-foreground text-sm leading-relaxed" data-testid="product-description">
-                  <p>{cleanDescription}</p>
-                </div>
-              )}
+              </div>
             </div>
           )}
 
