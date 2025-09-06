@@ -36,38 +36,59 @@ export function useBarcodeScanner() {
       ].filter(Boolean),
     };
 
-    // Enhanced camera constraints with zoom and focus optimization
-    const cameraConstraints = {
-      facingMode: "environment",
-      zoom: { ideal: 2.0 }, // Start with 2x zoom for better barcode detection
-      focusMode: { ideal: "continuous" }, // Auto-focus for better scanning
-      width: { ideal: 1920 }, // Higher resolution for better scanning
-      height: { ideal: 1080 }
-    };
-
+    // Start with basic camera constraints and add enhancements progressively
+    const basicConstraints = { facingMode: "environment" };
+    
     try {
       scannerRef.current = new window.Html5Qrcode(elementId);
       
-      scannerRef.current.start(
-        cameraConstraints,
-        config,
-        (decodedText: string) => {
-          onScanSuccess(decodedText);
-        },
-        (errorMessage: string) => {
-          if (onScanError) {
-            onScanError(errorMessage);
+      // Try enhanced constraints first, fallback to basic if failed
+      const tryEnhancedCamera = () => {
+        const enhancedConstraints = {
+          facingMode: "environment",
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        };
+        
+        return scannerRef.current.start(
+          enhancedConstraints,
+          config,
+          (decodedText: string) => {
+            onScanSuccess(decodedText);
+          },
+          (errorMessage: string) => {
+            if (onScanError) {
+              onScanError(errorMessage);
+            }
           }
-        }
-      ).then(() => {
-        // Apply additional zoom after scanner starts if supported
+        );
+      };
+      
+      const tryBasicCamera = () => {
+        return scannerRef.current.start(
+          basicConstraints,
+          config,
+          (decodedText: string) => {
+            onScanSuccess(decodedText);
+          },
+          (errorMessage: string) => {
+            if (onScanError) {
+              onScanError(errorMessage);
+            }
+          }
+        );
+      };
+      
+      // Try enhanced camera first, fallback to basic if failed
+      tryEnhancedCamera().then(() => {
+        console.log('Enhanced camera started successfully');
+        // Apply zoom after successful start
         setTimeout(() => {
           try {
-            if (scannerRef.current) {
+            if (scannerRef.current && scannerRef.current.getRunningTrackCapabilities) {
               const capabilities = scannerRef.current.getRunningTrackCapabilities();
               if (capabilities && capabilities.zoom) {
                 console.log('Camera zoom support detected, range:', capabilities.zoom.min, '-', capabilities.zoom.max);
-                // Apply optimal zoom level for barcode scanning
                 const optimalZoom = Math.min(2.5, capabilities.zoom.max || 2.0);
                 scannerRef.current.applyVideoConstraints({
                   advanced: [{ zoom: optimalZoom }]
@@ -79,7 +100,10 @@ export function useBarcodeScanner() {
           } catch (error) {
             console.log('Camera capabilities check failed:', error);
           }
-        }, 1000);
+        }, 1500);
+      }).catch((error) => {
+        console.log('Enhanced camera failed, trying basic camera:', error);
+        return tryBasicCamera();
       });
     } catch (error) {
       console.error('Error starting scanner:', error);
