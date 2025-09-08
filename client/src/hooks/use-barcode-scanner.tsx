@@ -21,9 +21,14 @@ export function useBarcodeScanner() {
       return;
     }
 
+    // Optimized config for fast and accurate scanning
     const config = {
       fps: 120,
       aspectRatio: 1.0,
+      // Optimize for speed and accuracy
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true
+      },
       formatsToSupport: [
         window.Html5QrcodeSupportedFormats?.UPC_A,
         window.Html5QrcodeSupportedFormats?.UPC_E,
@@ -38,8 +43,18 @@ export function useBarcodeScanner() {
     try {
       scannerRef.current = new window.Html5Qrcode(elementId);
       
+      // Enhanced camera constraints for better barcode detection
+      const cameraConfig = {
+        facingMode: { exact: "environment" },
+        // High resolution for better barcode recognition (zoom-like effect)
+        width: { ideal: 1920, min: 1280 },
+        height: { ideal: 1080, min: 720 },
+        // Enhanced frame rate for 120fps scanning
+        frameRate: { ideal: 120, min: 60 }
+      };
+
       scannerRef.current.start(
-        { facingMode: "environment" },
+        cameraConfig,
         config,
         (decodedText: string) => {
           onScanSuccess(decodedText);
