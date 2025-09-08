@@ -31,9 +31,7 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
       try {
         setIsLoading(true);
         
-        // Add 500ms delay for camera stabilization
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
+        // Start scanner immediately for faster response
         await startScanner(
           scannerElementId,
           (decodedText) => {
@@ -52,9 +50,11 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
           }
         );
         
+        // Set loading false immediately when scanner starts
         setIsLoading(false);
       } catch (initError) {
         console.error('Scanner initialization failed:', initError);
+        // Keep loading false on error too
         setIsLoading(false);
       }
     };

@@ -64,7 +64,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         },
         singleChannel: false
       },
-      frequency: 5, // 200ms intervals
+      frequency: 1, // 1000ms intervals - slower for easier positioning
       numOfWorkers: 4,
       halfSample: false,
       decoder: {
@@ -164,8 +164,8 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       }
     };
 
-    // Start detection loop with 100ms intervals
-    const detectionLoop = setInterval(detectFromVideo, 100);
+    // Start detection loop with 500ms intervals - slower for easier positioning
+    const detectionLoop = setInterval(detectFromVideo, 500);
     detectionTimeoutRef.current = detectionLoop;
     
     return detectionLoop;
@@ -211,8 +211,8 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       }
     };
 
-    // Start pattern detection with 100ms intervals
-    const detectionLoop = setInterval(analyzeFrame, 100);
+    // Start pattern detection with 500ms intervals - slower for easier positioning
+    const detectionLoop = setInterval(analyzeFrame, 500);
     detectionTimeoutRef.current = detectionLoop;
     
     return detectionLoop;
