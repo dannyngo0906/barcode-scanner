@@ -103,8 +103,9 @@
 }
 
 @keyframes scan {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(160px); }
+  0% { transform: translateY(-50%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(50vh); opacity: 0; }
 }
 
 /* Hide Html5Qrcode UI elements */

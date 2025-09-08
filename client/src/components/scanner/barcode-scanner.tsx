@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { X, Plus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { X, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useBarcodeScanner } from '@/hooks/use-barcode-scanner';
+import { useEnhancedBarcodeScanner } from '@/hooks/use-enhanced-barcode-scanner';
 
 interface BarcodeScannerProps {
   onScanSuccess: (barcode: string) => void;
@@ -10,39 +10,54 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: BarcodeScannerProps) {
-  const { startScanner, stopScanner } = useBarcodeScanner();
-  const scannerElementId = 'qr-reader';
+  const {
+    startScanner,
+    stopScanner,
+    isScanning,
+    isInitialized,
+    error,
+    scannerType
+  } = useEnhancedBarcodeScanner({
+    debounceMs: 1200,
+    pauseAfterScanMs: 2000
+  });
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const scannerElementId = 'enhanced-scanner';
 
   useEffect(() => {
-    // Load Html5Qrcode script if not already loaded
-    if (!window.Html5Qrcode) {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-      script.onload = () => {
-        startScanner(
+    const initializeScanner = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Add 500ms delay for camera stabilization
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await startScanner(
           scannerElementId,
           (decodedText) => {
-            stopScanner();
-            onScanSuccess(decodedText);
+            setShowSuccess(true);
+            
+            // Show success feedback for 300ms
+            setTimeout(() => {
+              stopScanner();
+              onScanSuccess(decodedText);
+            }, 300);
           },
-          (error) => {
-            console.log('Scanner error:', error);
+          (scanError) => {
+            console.error('Enhanced scanner error:', scanError);
           }
         );
-      };
-      document.head.appendChild(script);
-    } else {
-      startScanner(
-        scannerElementId,
-        (decodedText) => {
-          stopScanner();
-          onScanSuccess(decodedText);
-        },
-        (error) => {
-          console.log('Scanner error:', error);
-        }
-      );
-    }
+        
+        setIsLoading(false);
+      } catch (initError) {
+        console.error('Scanner initialization failed:', initError);
+        setIsLoading(false);
+      }
+    };
+
+    initializeScanner();
 
     return () => {
       stopScanner();
@@ -50,9 +65,56 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
   }, [startScanner, stopScanner, onScanSuccess]);
 
   return (
-    <div className="relative w-full h-screen">
+    <div className="relative w-full h-screen bg-black">
       {/* Scanner container */}
       <div id={scannerElementId} className="w-full h-full" />
+      
+      {/* Loading state */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+          <div className="text-center text-white">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+            <p className="text-sm">Đang khởi động camera...</p>
+            {scannerType && (
+              <p className="text-xs text-gray-300 mt-1">
+                Sử dụng: {scannerType === 'quagga' ? 'QuaggaJS' : scannerType === 'detector' ? 'BarcodeDetector' : 'Pattern Detection'}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Ready indicator */}
+      {isInitialized && !isLoading && !error && (
+        <div className="absolute top-4 right-4">
+          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+        </div>
+      )}
+      
+      {/* Success flash */}
+      {showSuccess && (
+        <div className="absolute inset-0 bg-green-500/30 pointer-events-none" />
+      )}
+      
+      {/* Error state */}
+      {error && (
+        <div className="absolute top-16 left-4 right-4">
+          <div className="bg-red-500/90 text-white p-3 rounded-lg text-sm">
+            {error}
+          </div>
+        </div>
+      )}
+      
+      {/* Scanning animation overlay */}
+      {isInitialized && !isLoading && !error && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="relative w-full h-full">
+            <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2">
+              <div className="h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-scan-line" />
+            </div>
+          </div>
+        </div>
+      )}
       
 
       {/* Close button */}
