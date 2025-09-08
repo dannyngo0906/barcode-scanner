@@ -39,9 +39,11 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
           (decodedText) => {
             setShowSuccess(true);
             
-            // Show success feedback for 300ms
+            // Immediately stop scanner to prevent further scans
+            stopScanner();
+            
+            // Show success feedback for 300ms then callback
             setTimeout(() => {
-              stopScanner();
               onScanSuccess(decodedText);
             }, 300);
           },
@@ -60,6 +62,8 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
     initializeScanner();
 
     return () => {
+      // Cleanup on component unmount
+      console.log('BarcodeScanner component unmounting, cleaning up...');
       stopScanner();
     };
   }, [startScanner, stopScanner, onScanSuccess]);

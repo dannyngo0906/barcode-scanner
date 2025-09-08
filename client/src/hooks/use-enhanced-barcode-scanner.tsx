@@ -97,13 +97,11 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
             return;
           }
           
+          // Immediately stop QuaggaJS to prevent further detections
+          Quagga.stop();
+          
           setState(prev => ({ ...prev, lastScanTime: now }));
           onScanSuccess(result.codeResult.code);
-          
-          // Pause scanning after successful detection
-          setTimeout(() => {
-            setState(prev => ({ ...prev, lastScanTime: 0 }));
-          }, config.pauseAfterScanMs);
         });
         
         Quagga.start();
@@ -152,13 +150,14 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
             return;
           }
           
+          // Stop detection immediately
+          if (detectionTimeoutRef.current) {
+            clearInterval(detectionTimeoutRef.current);
+            detectionTimeoutRef.current = null;
+          }
+          
           setState(prev => ({ ...prev, lastScanTime: now }));
           onScanSuccess(barcodes[0].rawValue);
-          
-          // Pause scanning after successful detection
-          setTimeout(() => {
-            setState(prev => ({ ...prev, lastScanTime: 0 }));
-          }, config.pauseAfterScanMs);
         }
       } catch (error) {
         console.error('BarcodeDetector error:', error);
@@ -201,12 +200,14 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
           return;
         }
         
+        // Stop detection immediately
+        if (detectionTimeoutRef.current) {
+          clearInterval(detectionTimeoutRef.current);
+          detectionTimeoutRef.current = null;
+        }
+        
         setState(prev => ({ ...prev, lastScanTime: now }));
         onScanSuccess(`PATTERN_DETECTED_${Date.now()}`);
-        
-        setTimeout(() => {
-          setState(prev => ({ ...prev, lastScanTime: 0 }));
-        }, config.pauseAfterScanMs);
       }
     };
 
@@ -277,17 +278,46 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       videoRef.current = videoElement;
       canvasRef.current = canvasElement;
       
-      // Get camera stream with enhanced constraints
-      streamRef.current = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920, min: 640 },
-          height: { ideal: 1080, min: 480 },
-          aspectRatio: { ideal: 16/9 },
-          frameRate: { ideal: 30, min: 15 }
-        },
-        audio: false
-      });
+      // Get camera stream with enhanced constraints and retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          // Add delay between retries to allow camera cleanup
+          if (retryCount > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+          
+          streamRef.current = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1920, min: 640 },
+              height: { ideal: 1080, min: 480 },
+              aspectRatio: { ideal: 16/9 },
+              frameRate: { ideal: 30, min: 15 }
+            },
+            audio: false
+          });
+          break; // Success, exit retry loop
+        } catch (cameraError: any) {
+          retryCount++;
+          console.warn(`Camera access attempt ${retryCount} failed:`, cameraError);
+          
+          if (retryCount === maxRetries) {
+            // Final attempt with minimal constraints
+            try {
+              streamRef.current = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' },
+                audio: false
+              });
+              console.log('Camera access successful with minimal constraints');
+            } catch (finalError) {
+              throw new Error(`Camera access failed after ${maxRetries} attempts: ${cameraError.message}`);
+            }
+          }
+        }
+      }
       
       videoElement.srcObject = streamRef.current;
       videoElement.play();
@@ -338,9 +368,16 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
   // Stop scanner and cleanup
   const stopScanner = useCallback(() => {
     try {
+      console.log('Stopping scanner, type:', scannerRef.current);
+      
       // Stop QuaggaJS
       if (scannerRef.current === 'quagga') {
-        Quagga.stop();
+        try {
+          Quagga.stop();
+          Quagga.offDetected(); // Remove all detection listeners
+        } catch (quaggaError) {
+          console.warn('Error stopping Quagga:', quaggaError);
+        }
       }
       
       // Stop detection timeouts
@@ -349,19 +386,41 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         detectionTimeoutRef.current = null;
       }
       
-      // Stop camera stream
+      // Stop camera stream with additional safety
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
+        try {
+          streamRef.current.getTracks().forEach(track => {
+            track.stop();
+            console.log('Stopped track:', track.kind, track.readyState);
+          });
+          streamRef.current = null;
+        } catch (streamError) {
+          console.warn('Error stopping stream:', streamError);
+        }
       }
       
       // Cleanup video element
       if (videoRef.current) {
-        videoRef.current.remove();
-        videoRef.current = null;
+        try {
+          if (videoRef.current.srcObject) {
+            videoRef.current.srcObject = null;
+          }
+          videoRef.current.remove();
+          videoRef.current = null;
+        } catch (videoError) {
+          console.warn('Error cleaning up video:', videoError);
+        }
+      }
+      
+      // Reset scanner element content
+      const scannerElement = document.getElementById('enhanced-scanner');
+      if (scannerElement) {
+        scannerElement.innerHTML = '';
       }
       
       scannerRef.current = null;
+      barcodeDetectorRef.current = null;
+      
       setState({
         isInitialized: false,
         isScanning: false,
@@ -369,8 +428,17 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         lastScanTime: 0
       });
       
+      console.log('Scanner cleanup completed');
+      
     } catch (error) {
       console.error('Error stopping scanner:', error);
+      // Force reset state even if cleanup fails
+      setState({
+        isInitialized: false,
+        isScanning: false,
+        error: null,
+        lastScanTime: 0
+      });
     }
   }, []);
 
