@@ -9,8 +9,13 @@ export function useCameraAccess() {
       // Request camera access with rear camera preference
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          facingMode: { ideal: 'environment' }
-        } 
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920, min: 640 },
+          height: { ideal: 1080, min: 480 },
+          aspectRatio: { ideal: 16/9 },
+          frameRate: { ideal: 30, min: 15 }
+        },
+        audio: false
       });
       
       // Stop the stream immediately after checking
