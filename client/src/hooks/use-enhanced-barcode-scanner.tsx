@@ -84,7 +84,14 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
     };
 
     return new Promise((resolve, reject) => {
+      // Set timeout for faster initialization failure detection
+      const initTimeout = setTimeout(() => {
+        reject(new Error('QuaggaJS initialization timeout'));
+      }, 3000); // 3 seconds max for init
+      
       Quagga.init(quaggaConfig, (err: any) => {
+        clearTimeout(initTimeout);
+        
         if (err) {
           console.error('QuaggaJS init error:', err);
           reject(err);
@@ -278,62 +285,54 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       videoRef.current = videoElement;
       canvasRef.current = canvasElement;
       
-      // Get camera stream with enhanced constraints and retry logic
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      while (retryCount < maxRetries) {
+      // Fast camera access with minimal retries
+      try {
+        // Try optimal settings first
+        streamRef.current = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920, min: 640 },
+            height: { ideal: 1080, min: 480 },
+            aspectRatio: { ideal: 16/9 },
+            frameRate: { ideal: 30, min: 15 }
+          },
+          audio: false
+        });
+      } catch (cameraError: any) {
+        console.warn('High-quality camera access failed, trying basic:', cameraError);
+        // Immediate fallback to basic constraints - no delay
         try {
-          // Add delay between retries to allow camera cleanup
-          if (retryCount > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-          }
-          
           streamRef.current = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: 'environment' },
-              width: { ideal: 1920, min: 640 },
-              height: { ideal: 1080, min: 480 },
-              aspectRatio: { ideal: 16/9 },
-              frameRate: { ideal: 30, min: 15 }
-            },
+            video: { facingMode: 'environment' },
             audio: false
           });
-          break; // Success, exit retry loop
-        } catch (cameraError: any) {
-          retryCount++;
-          console.warn(`Camera access attempt ${retryCount} failed:`, cameraError);
-          
-          if (retryCount === maxRetries) {
-            // Final attempt with minimal constraints
-            try {
-              streamRef.current = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' },
-                audio: false
-              });
-              console.log('Camera access successful with minimal constraints');
-            } catch (finalError) {
-              throw new Error(`Camera access failed after ${maxRetries} attempts: ${cameraError.message}`);
-            }
-          }
+        } catch (finalError) {
+          throw new Error(`Camera access failed: ${cameraError.message}`);
         }
       }
       
+      // Set up video element immediately and in parallel
       videoElement.srcObject = streamRef.current;
-      videoElement.play();
+      videoElement.style.width = '100%';
+      videoElement.style.height = '100%';
+      videoElement.style.objectFit = 'cover';
+      videoElement.autoplay = true;
+      videoElement.playsInline = true;
       
-      // Append video to scanner element
+      // Append to DOM immediately
       const scannerElement = document.getElementById(elementId);
       if (scannerElement) {
         scannerElement.appendChild(videoElement);
-        videoElement.style.width = '100%';
-        videoElement.style.height = '100%';
-        videoElement.style.objectFit = 'cover';
       }
       
-      // Wait for video to be ready
+      // Start playing and wait for ready state - use faster event
+      videoElement.play();
       await new Promise((resolve) => {
-        videoElement.onloadedmetadata = () => resolve(true);
+        if (videoElement.readyState >= 2) { // HAVE_CURRENT_DATA
+          resolve(true);
+        } else {
+          videoElement.oncanplay = () => resolve(true); // Faster than onloadedmetadata
+        }
       });
       
       try {

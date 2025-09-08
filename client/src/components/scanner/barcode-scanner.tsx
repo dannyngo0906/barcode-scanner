@@ -28,11 +28,14 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
 
   useEffect(() => {
     const initializeScanner = async () => {
+      const startTime = performance.now();
+      console.log('Starting camera initialization...');
+      
       try {
         setIsLoading(true);
         
-        // Start scanner immediately for faster response
-        await startScanner(
+        // Start scanner with aggressive timeout
+        const scannerPromise = startScanner(
           scannerElementId,
           (decodedText) => {
             setShowSuccess(true);
@@ -50,6 +53,16 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
           }
         );
         
+        // Race against timeout for faster failure detection
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Scanner startup timeout')), 5000);
+        });
+        
+        await Promise.race([scannerPromise, timeoutPromise]);
+        
+        const endTime = performance.now();
+        console.log(`Camera initialized in ${endTime - startTime}ms`);
+        
         // Set loading false immediately when scanner starts
         setIsLoading(false);
       } catch (initError) {
@@ -59,6 +72,7 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
       }
     };
 
+    // Start initialization immediately without any delay
     initializeScanner();
 
     return () => {
