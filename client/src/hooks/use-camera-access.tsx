@@ -6,15 +6,10 @@ export function useCameraAccess() {
 
   const checkCameraAccess = useCallback(async (): Promise<boolean> => {
     try {
-      // Request camera access with enhanced constraints for barcode scanning
+      // Request camera access with rear camera preference
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          facingMode: { exact: 'environment' },
-          // High resolution for better barcode detection (zoom-like effect)
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          // Enhanced frame rate for smoother scanning
-          frameRate: { ideal: 120, min: 60 }
+          facingMode: { ideal: 'environment' }
         } 
       });
       
