@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+
+// Extend MediaTrackCapabilities to include zoom
+interface ExtendedMediaTrackCapabilities extends MediaTrackCapabilities {
+  zoom?: {
+    max: number;
+    min: number;
+    step: number;
+  };
+}
 import { X, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { useBarcodeScanner } from '@/hooks/use-barcode-scanner';
 
 interface BarcodeScannerProps {
@@ -26,7 +34,7 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
         const track = stream.getVideoTracks()[0];
         
         if (track) {
-          const capabilities = track.getCapabilities();
+          const capabilities = track.getCapabilities() as ExtendedMediaTrackCapabilities;
           if (capabilities.zoom) {
             const settings = track.getSettings();
             const constraintZoom = Math.min(zoom, capabilities.zoom.max || 3);
@@ -55,7 +63,7 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
         const track = stream.getVideoTracks()[0];
         
         if (track) {
-          const capabilities = track.getCapabilities();
+          const capabilities = track.getCapabilities() as ExtendedMediaTrackCapabilities;
           if (capabilities.zoom) {
             setMaxZoom(capabilities.zoom.max || 3);
             console.log(`Max zoom detected: ${capabilities.zoom.max}x`);
@@ -159,20 +167,8 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
           <ZoomIn className="w-5 h-5" />
         </Button>
         
-        <div className="h-20 flex items-center">
-          <Slider
-            value={zoomLevel}
-            onValueChange={(value) => {
-              setZoomLevel(value);
-              applyZoom(value[0]);
-            }}
-            max={maxZoom}
-            min={1}
-            step={0.1}
-            orientation="vertical"
-            className="h-16"
-            data-testid="zoom-slider"
-          />
+        <div className="text-xs text-white bg-black/50 px-2 py-1 rounded">
+          {zoomLevel[0].toFixed(1)}x
         </div>
         
         <Button
@@ -188,10 +184,6 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
         >
           <ZoomOut className="w-5 h-5" />
         </Button>
-        
-        <div className="text-xs text-white bg-black/50 px-2 py-1 rounded">
-          {zoomLevel[0].toFixed(1)}x
-        </div>
       </div>
 
       {/* Bottom controls */}
