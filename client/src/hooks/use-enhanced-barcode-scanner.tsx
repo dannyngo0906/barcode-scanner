@@ -64,7 +64,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         },
         singleChannel: false
       },
-      frequency: 1, // 1000ms intervals - slower for easier positioning
+      frequency: 5, // 200ms intervals
       numOfWorkers: 4,
       halfSample: false,
       decoder: {
@@ -84,14 +84,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
     };
 
     return new Promise((resolve, reject) => {
-      // Set timeout for faster initialization failure detection
-      const initTimeout = setTimeout(() => {
-        reject(new Error('QuaggaJS initialization timeout'));
-      }, 3000); // 3 seconds max for init
-      
       Quagga.init(quaggaConfig, (err: any) => {
-        clearTimeout(initTimeout);
-        
         if (err) {
           console.error('QuaggaJS init error:', err);
           reject(err);
@@ -171,8 +164,8 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       }
     };
 
-    // Start detection loop with 500ms intervals - slower for easier positioning
-    const detectionLoop = setInterval(detectFromVideo, 500);
+    // Start detection loop with 100ms intervals
+    const detectionLoop = setInterval(detectFromVideo, 100);
     detectionTimeoutRef.current = detectionLoop;
     
     return detectionLoop;
@@ -218,8 +211,8 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       }
     };
 
-    // Start pattern detection with 500ms intervals - slower for easier positioning
-    const detectionLoop = setInterval(analyzeFrame, 500);
+    // Start pattern detection with 100ms intervals
+    const detectionLoop = setInterval(analyzeFrame, 100);
     detectionTimeoutRef.current = detectionLoop;
     
     return detectionLoop;
@@ -285,54 +278,62 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       videoRef.current = videoElement;
       canvasRef.current = canvasElement;
       
-      // Fast camera access with minimal retries
-      try {
-        // Try optimal settings first
-        streamRef.current = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1920, min: 640 },
-            height: { ideal: 1080, min: 480 },
-            aspectRatio: { ideal: 16/9 },
-            frameRate: { ideal: 30, min: 15 }
-          },
-          audio: false
-        });
-      } catch (cameraError: any) {
-        console.warn('High-quality camera access failed, trying basic:', cameraError);
-        // Immediate fallback to basic constraints - no delay
+      // Get camera stream with enhanced constraints and retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
         try {
+          // Add delay between retries to allow camera cleanup
+          if (retryCount > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+          
           streamRef.current = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1920, min: 640 },
+              height: { ideal: 1080, min: 480 },
+              aspectRatio: { ideal: 16/9 },
+              frameRate: { ideal: 30, min: 15 }
+            },
             audio: false
           });
-        } catch (finalError) {
-          throw new Error(`Camera access failed: ${cameraError.message}`);
+          break; // Success, exit retry loop
+        } catch (cameraError: any) {
+          retryCount++;
+          console.warn(`Camera access attempt ${retryCount} failed:`, cameraError);
+          
+          if (retryCount === maxRetries) {
+            // Final attempt with minimal constraints
+            try {
+              streamRef.current = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' },
+                audio: false
+              });
+              console.log('Camera access successful with minimal constraints');
+            } catch (finalError) {
+              throw new Error(`Camera access failed after ${maxRetries} attempts: ${cameraError.message}`);
+            }
+          }
         }
       }
       
-      // Set up video element immediately and in parallel
       videoElement.srcObject = streamRef.current;
-      videoElement.style.width = '100%';
-      videoElement.style.height = '100%';
-      videoElement.style.objectFit = 'cover';
-      videoElement.autoplay = true;
-      videoElement.playsInline = true;
+      videoElement.play();
       
-      // Append to DOM immediately
+      // Append video to scanner element
       const scannerElement = document.getElementById(elementId);
       if (scannerElement) {
         scannerElement.appendChild(videoElement);
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        videoElement.style.objectFit = 'cover';
       }
       
-      // Start playing and wait for ready state - use faster event
-      videoElement.play();
+      // Wait for video to be ready
       await new Promise((resolve) => {
-        if (videoElement.readyState >= 2) { // HAVE_CURRENT_DATA
-          resolve(true);
-        } else {
-          videoElement.oncanplay = () => resolve(true); // Faster than onloadedmetadata
-        }
+        videoElement.onloadedmetadata = () => resolve(true);
       });
       
       try {
