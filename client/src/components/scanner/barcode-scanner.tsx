@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Plus, Loader2, Play, Camera } from 'lucide-react';
+import { X, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEnhancedBarcodeScanner } from '@/hooks/use-enhanced-barcode-scanner';
 
@@ -11,11 +11,9 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: BarcodeScannerProps) {
   const {
-    startPreview,
-    startScanningMode,
+    startScanner,
     stopScanner,
     isScanning,
-    isPreviewing,
     isInitialized,
     error,
     scannerType
@@ -26,53 +24,49 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
   
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isPreviewReady, setIsPreviewReady] = useState(false);
   const scannerElementId = 'enhanced-scanner';
 
   useEffect(() => {
-    const initializePreview = async () => {
+    const initializeScanner = async () => {
       try {
         setIsLoading(true);
-        setIsPreviewReady(false);
         
-        // Start preview mode immediately (no delay for fast startup)
-        await startPreview(
+        // Start scanner immediately for faster response
+        await startScanner(
           scannerElementId,
-          () => {
-            setIsLoading(false);
-            setIsPreviewReady(true);
-            console.log('Camera preview ready');
+          (decodedText) => {
+            setShowSuccess(true);
+            
+            // Immediately stop scanner to prevent further scans
+            stopScanner();
+            
+            // Show success feedback for 300ms then callback
+            setTimeout(() => {
+              onScanSuccess(decodedText);
+            }, 300);
+          },
+          (scanError) => {
+            console.error('Enhanced scanner error:', scanError);
           }
         );
+        
+        // Set loading false immediately when scanner starts
+        setIsLoading(false);
       } catch (initError) {
-        console.error('Preview initialization failed:', initError);
+        console.error('Scanner initialization failed:', initError);
+        // Keep loading false on error too
         setIsLoading(false);
       }
     };
 
-    initializePreview();
+    initializeScanner();
 
     return () => {
+      // Cleanup on component unmount
       console.log('BarcodeScanner component unmounting, cleaning up...');
       stopScanner();
     };
-  }, [startPreview, stopScanner]);
-  
-  const handleStartScanning = () => {
-    if (!isPreviewReady || isScanning) return;
-    
-    startScanningMode((decodedText) => {
-      setShowSuccess(true);
-      
-      // Immediately stop scanner to prevent further scans
-      stopScanner();
-      
-      // Show success feedback for 300ms then callback
-      setTimeout(() => {
-        onScanSuccess(decodedText);
-      }, 300);
-    });
-  };
+  }, [startScanner, stopScanner, onScanSuccess]);
 
   return (
     <div className="relative w-full h-screen bg-black">
@@ -85,37 +79,11 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
           <div className="text-center text-white">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
             <p className="text-sm">Đang khởi động camera...</p>
-          </div>
-        </div>
-      )}
-      
-      {/* Preview mode with start scanning button */}
-      {isPreviewing && isPreviewReady && !isScanning && (
-        <div className="absolute inset-0 flex flex-col justify-between bg-black/20">
-          {/* Top instruction */}
-          <div className="p-4 text-center">
-            <div className="bg-black/70 backdrop-blur rounded-lg p-3 inline-block">
-              <Camera className="w-6 h-6 text-white mx-auto mb-2" />
-              <p className="text-white text-sm font-medium">
-                Đưa camera vào vị trí mã vạch
+            {scannerType && (
+              <p className="text-xs text-gray-300 mt-1">
+                Sử dụng: {scannerType === 'quagga' ? 'QuaggaJS' : scannerType === 'detector' ? 'BarcodeDetector' : 'Pattern Detection'}
               </p>
-              <p className="text-white/80 text-xs mt-1">
-                Nhấn nút bên dưới để bắt đầu quét
-              </p>
-            </div>
-          </div>
-          
-          {/* Center start scanning button */}
-          <div className="flex-1 flex items-center justify-center">
-            <Button
-              onClick={handleStartScanning}
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full shadow-lg transition-transform hover:scale-105"
-              data-testid="start-scanning-btn"
-            >
-              <Play className="w-6 h-6 mr-2" />
-              Bắt đầu quét
-            </Button>
+            )}
           </div>
         </div>
       )}
@@ -141,19 +109,12 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
         </div>
       )}
       
-      {/* Scanning animation overlay - only when actively scanning */}
-      {isScanning && (
+      {/* Scanning animation overlay */}
+      {isInitialized && !isLoading && !error && (
         <div className="absolute inset-0 pointer-events-none">
           <div className="relative w-full h-full">
             <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2">
               <div className="h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-scan-line" />
-            </div>
-            {/* Scanning status */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
-              <div className="bg-blue-600/90 text-white px-4 py-2 rounded-full text-sm font-medium">
-                <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                Đang quét mã vạch...
-              </div>
             </div>
           </div>
         </div>
@@ -172,7 +133,7 @@ export function BarcodeScanner({ onScanSuccess, onClose, onManualInput }: Barcod
       </Button>
 
       {/* Bottom controls */}
-      <div className="absolute bottom-6 left-0 right-0 px-4">
+      <div className="absolute bottom-20 left-0 right-0 px-4">
         <div className="bg-black/80 backdrop-blur rounded-lg p-4 text-center">
           <Button
             variant="ghost"
