@@ -12,6 +12,7 @@ declare global {
 interface ScannerState {
   isInitialized: boolean;
   isScanning: boolean;
+  isPreviewing: boolean;
   error: string | null;
   lastScanTime: number;
 }
@@ -35,6 +36,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
   const [state, setState] = useState<ScannerState>({
     isInitialized: false,
     isScanning: false,
+    isPreviewing: false,
     error: null,
     lastScanTime: 0
   });
@@ -42,7 +44,8 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
   // Initialize QuaggaJS
   const initQuagga = useCallback((
     elementId: string,
-    onScanSuccess: (barcode: string) => void
+    onScanSuccess: (barcode: string) => void,
+    previewOnly: boolean = false
   ) => {
     const quaggaConfig = {
       inputStream: {
@@ -50,10 +53,10 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         type: "LiveStream",
         target: `#${elementId}`,
         constraints: {
-          width: { ideal: 1920, min: 640 },
-          height: { ideal: 1080, min: 480 },
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 },
           aspectRatio: { ideal: 16/9 },
-          frameRate: { ideal: 30, min: 15 },
+          frameRate: { ideal: 24, min: 15 },
           facingMode: { ideal: 'environment' }
         },
         area: {
@@ -64,7 +67,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         },
         singleChannel: false
       },
-      frequency: 5, // 200ms intervals
+      frequency: 15, // 600ms intervals (3x slower for better user control)
       numOfWorkers: 4,
       halfSample: false,
       decoder: {
@@ -91,18 +94,20 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
           return;
         }
         
-        Quagga.onDetected((result: any) => {
-          const now = Date.now();
-          if (now - state.lastScanTime < config.debounceMs) {
-            return;
-          }
-          
-          // Immediately stop QuaggaJS to prevent further detections
-          Quagga.stop();
-          
-          setState(prev => ({ ...prev, lastScanTime: now }));
-          onScanSuccess(result.codeResult.code);
-        });
+        if (!previewOnly) {
+          Quagga.onDetected((result: any) => {
+            const now = Date.now();
+            if (now - state.lastScanTime < config.debounceMs) {
+              return;
+            }
+            
+            // Immediately stop QuaggaJS to prevent further detections
+            Quagga.stop();
+            
+            setState(prev => ({ ...prev, lastScanTime: now }));
+            onScanSuccess(result.codeResult.code);
+          });
+        }
         
         Quagga.start();
         scannerRef.current = 'quagga';
@@ -253,7 +258,128 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
     return darkRatio > 0.2 && lightRatio > 0.2 && Math.abs(darkRatio - lightRatio) > 0.1;
   };
 
-  // Start enhanced scanner with fallback chain
+  // Start preview mode first (camera ready but not scanning)
+  const startPreview = useCallback(async (
+    elementId: string,
+    onPreviewReady?: () => void
+  ) => {
+    try {
+      setState(prev => ({ ...prev, isPreviewing: true, error: null }));
+      
+      // Try QuaggaJS first but don't start detection
+      try {
+        await initQuagga(elementId, () => {}, true); // Pass true to skip detection
+        setState(prev => ({ ...prev, isInitialized: true }));
+        if (onPreviewReady) onPreviewReady();
+        console.log('Preview initialized with QuaggaJS');
+        return;
+      } catch (quaggaError) {
+        console.warn('QuaggaJS preview failed, trying manual camera setup:', quaggaError);
+      }
+      
+      // Manual camera setup for preview
+      const videoElement = document.createElement('video');
+      const canvasElement = document.createElement('canvas');
+      videoRef.current = videoElement;
+      canvasRef.current = canvasElement;
+      
+      // Get camera stream with optimized constraints for fast startup
+      let retryCount = 0;
+      const maxRetries = 2; // Reduced retries for faster startup
+      
+      while (retryCount < maxRetries) {
+        try {
+          if (retryCount > 0) {
+            await new Promise(resolve => setTimeout(resolve, 200 * retryCount)); // Reduced delay
+          }
+          
+          streamRef.current = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1280, min: 640 },
+              height: { ideal: 720, min: 480 },
+              aspectRatio: { ideal: 16/9 },
+              frameRate: { ideal: 24, min: 15 }
+            },
+            audio: false
+          });
+          break;
+        } catch (cameraError: any) {
+          retryCount++;
+          if (retryCount === maxRetries) {
+            throw new Error(`Camera access failed: ${cameraError.message}`);
+          }
+        }
+      }
+      
+      videoElement.srcObject = streamRef.current;
+      videoElement.play();
+      
+      const scannerElement = document.getElementById(elementId);
+      if (scannerElement) {
+        scannerElement.appendChild(videoElement);
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        videoElement.style.objectFit = 'cover';
+      }
+      
+      await new Promise((resolve) => {
+        videoElement.onloadedmetadata = () => resolve(true);
+      });
+      
+      setState(prev => ({ ...prev, isInitialized: true }));
+      if (onPreviewReady) onPreviewReady();
+      console.log('Preview initialized with manual camera setup');
+      
+    } catch (error) {
+      console.error('Preview initialization failed:', error);
+      setState(prev => ({ 
+        ...prev, 
+        isPreviewing: false, 
+        error: 'Unable to initialize camera preview'
+      }));
+    }
+  }, []);
+  
+  // Start scanning mode (activate detection on existing preview)
+  const startScanningMode = useCallback((onScanSuccess: (barcode: string) => void) => {
+    if (!state.isInitialized) {
+      console.error('Scanner not initialized for scanning mode');
+      return;
+    }
+    
+    setState(prev => ({ ...prev, isScanning: true, isPreviewing: false }));
+    
+    if (scannerRef.current === 'quagga') {
+      // Re-enable QuaggaJS detection
+      Quagga.onDetected((result: any) => {
+        const now = Date.now();
+        if (now - state.lastScanTime < config.debounceMs) {
+          return;
+        }
+        
+        Quagga.stop();
+        setState(prev => ({ ...prev, lastScanTime: now }));
+        onScanSuccess(result.codeResult.code);
+      });
+    } else if (videoRef.current && canvasRef.current) {
+      // Start detection for fallback methods
+      try {
+        if (window.BarcodeDetector) {
+          initBarcodeDetector(videoRef.current, canvasRef.current, onScanSuccess);
+          scannerRef.current = 'detector';
+        } else {
+          initPatternDetection(videoRef.current, canvasRef.current, onScanSuccess);
+          scannerRef.current = 'pattern';
+        }
+        console.log('Scanning mode activated with', scannerRef.current);
+      } catch (error) {
+        console.error('Failed to start scanning mode:', error);
+      }
+    }
+  }, [state.isInitialized, state.lastScanTime, config.debounceMs, initBarcodeDetector, initPatternDetection]);
+  
+  // Start enhanced scanner with fallback chain (legacy method)
   const startScanner = useCallback(async (
     elementId: string,
     onScanSuccess: (barcode: string) => void,
@@ -292,10 +418,10 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
           streamRef.current = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: { ideal: 'environment' },
-              width: { ideal: 1920, min: 640 },
-              height: { ideal: 1080, min: 480 },
+              width: { ideal: 1280, min: 640 },
+              height: { ideal: 720, min: 480 },
               aspectRatio: { ideal: 16/9 },
-              frameRate: { ideal: 30, min: 15 }
+              frameRate: { ideal: 24, min: 15 }
             },
             audio: false
           });
@@ -424,6 +550,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       setState({
         isInitialized: false,
         isScanning: false,
+        isPreviewing: false,
         error: null,
         lastScanTime: 0
       });
@@ -436,6 +563,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
       setState({
         isInitialized: false,
         isScanning: false,
+        isPreviewing: false,
         error: null,
         lastScanTime: 0
       });
@@ -444,8 +572,11 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
 
   return {
     startScanner,
+    startPreview,
+    startScanningMode,
     stopScanner,
     isScanning: state.isScanning,
+    isPreviewing: state.isPreviewing,
     isInitialized: state.isInitialized,
     error: state.error,
     scannerType: scannerRef.current
