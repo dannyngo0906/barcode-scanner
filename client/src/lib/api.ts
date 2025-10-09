@@ -1,7 +1,7 @@
 import { Product, NocodbResponse } from '@/types/product';
 
 const NOCODB_BASE_URL = 'https://db.salesai.vn/api/v2/tables/m3rrbw0dbrlqogw/records';
-const NOCODB_TOKEN = import.meta.env.VITE_NOCODB_TOKEN;
+const NOCODB_TOKEN = 1Owqe7hG7sV0V16DQCv_BPC0gUDLITp-_yRXvLGA;
 
 export async function searchProductByBarcode(barcode: string): Promise<Product | null> {
   try {
