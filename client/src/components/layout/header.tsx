@@ -1,5 +1,6 @@
 import { Camera, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logoImage from '@assets/Logo ZNS _ Den_1760068379975.png';
 
 interface HeaderProps {
   onCameraClick: () => void;
@@ -13,7 +14,7 @@ export function Header({ onCameraClick }: HeaderProps) {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <Menu className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground">ScanShop</h1>
+          <img src={logoImage} alt="BOSHOP.VN" className="h-8" />
         </div>
         <Button
           onClick={onCameraClick}
