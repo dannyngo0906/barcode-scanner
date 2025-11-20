@@ -1,10 +1,38 @@
 import express, { type Request, Response, NextFunction } from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { validateEnv, logEnvConfig } from "./env";
+
+// Validate environment variables on startup
+const env = validateEnv();
+logEnvConfig(env);
 
 const app = express();
+
+// Security middleware - helmet with custom configuration
+app.use(helmet({
+  contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false, // Disable CSP in dev mode for Vite
+  crossOriginEmbedderPolicy: false, // Allow embedding for dev tools
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Rate limiting for API endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    error: "Too many requests from this IP, please try again later."
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply rate limiting to all API routes
+app.use("/api/", apiLimiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -37,7 +65,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  const server = await registerRoutes(app, env);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
