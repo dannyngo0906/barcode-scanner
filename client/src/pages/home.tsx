@@ -11,7 +11,7 @@ import { BarcodeScanner } from '@/components/scanner/barcode-scanner';
 import { ProductDisplay } from '@/components/product/product-display';
 import { useCameraAccess } from '@/hooks/use-camera-access';
 import { searchProductByBarcode } from '@/lib/api';
-import { Product, ScannerState } from '@/types/product';
+import { Product, ScannerState } from '@shared/schema';
 
 export default function Home() {
   const [currentState, setCurrentState] = useState<ScannerState>('welcome');

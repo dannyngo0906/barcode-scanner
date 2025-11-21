@@ -11,9 +11,30 @@ export function calculateDiscount(originalPrice: number, salePrice: number): num
 }
 
 export function cleanHtmlDescription(description: string): string {
-  // Remove HTML tags and extra whitespace
+  // Create a temporary DOM element to safely decode HTML entities
+  // and strip all HTML tags
+  if (typeof window !== 'undefined') {
+    const tempDiv = document.createElement('div');
+    tempDiv.textContent = description; // This prevents script execution
+    const textOnly = tempDiv.textContent || tempDiv.innerText || '';
+
+    // Now decode any HTML entities that might be in the text
+    tempDiv.innerHTML = textOnly;
+    const decoded = tempDiv.textContent || tempDiv.innerText || '';
+
+    // Remove extra whitespace
+    return decoded.replace(/\s+/g, ' ').trim();
+  }
+
+  // Fallback for server-side rendering (if any)
   return description
-    .replace(/<[^>]*>/g, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+    .replace(/<[^>]*>/g, '') // Remove all HTML tags
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
     .replace(/\s+/g, ' ')
     .trim();
 }
