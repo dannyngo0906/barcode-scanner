@@ -45,7 +45,8 @@ export async function registerRoutes(app: Express, env: EnvConfig): Promise<Serv
       }
 
       // Call NocoDB API with server-side credentials
-      const where = encodeURIComponent(`(barcode,eq,${barcode})`);
+      // Note: NocoDB v3 expects raw where clause, not URI encoded
+      const where = `(barcode,eq,${barcode})`;
       const url = `${env.NOCODB_BASE_URL}?offset=0&limit=25&where=${where}`;
 
       const headers: Record<string, string> = {
