@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, Camera, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Product } from '@/types/product';
+import { Product } from '@shared/schema';
 import { formatPrice, calculateDiscount, cleanHtmlDescription } from '@/lib/formatters';
 
 interface ProductDisplayProps {
