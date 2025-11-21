@@ -1,14 +1,8 @@
 import { Product, NocodbResponse } from '@/types/product';
 
-// Fallback mặc định (không an toàn để commit token thật vào repo)
-const DEFAULT_NOCODB_BASE_URL = 'https://db.salesai.vn/api/v2/tables/m3rrbw0dbrlqogw/records';
-
-// Hành vi:
-// - Nếu VITE_NOCODB_BASE_URL được cung cấp lúc build, sẽ dùng giá trị đó.
-// - Nếu không, client mặc định gọi cùng origin tới /api/nocodb (bạn deploy 1 serverless/function proxy tại đó)
-// - Token lấy từ VITE_NOCODB_TOKEN nếu bạn muốn gọi trực tiếp từ client (không khuyến nghị)
-const NOCODB_BASE_URL = (import.meta.env?.VITE_NOCODB_BASE_URL as string) || `${window.location.origin}/api/nocodb` || DEFAULT_NOCODB_BASE_URL;
-const NOCODB_TOKEN = (import.meta.env?.VITE_NOCODB_TOKEN as string) || undefined;
+// Cấu hình API trực tiếp - NocoDB v3
+const NOCODB_BASE_URL = 'https://db.salesai.vn/api/v3/data/pc6dn5x2psu1vsz/m3rrbw0dbrlqogw/records';
+const NOCODB_TOKEN = '1Owqe7hG7sV0V16DQCv_BPC0gUDLITp-_yRXvLGA';
 
 export async function searchProductByBarcode(barcode: string): Promise<Product | null> {
   if (!barcode) throw new Error('Barcode is required.');
@@ -28,10 +22,8 @@ export async function searchProductByBarcode(barcode: string): Promise<Product |
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'xc-token': NOCODB_TOKEN,
     };
-
-    // Nếu bạn dùng proxy server-side, proxy sẽ thêm token. Nếu không và bạn muốn gọi trực tiếp, attach token.
-    if (NOCODB_TOKEN) headers['xc-token'] = NOCODB_TOKEN;
 
     const response = await fetch(url, {
       method: 'GET',
