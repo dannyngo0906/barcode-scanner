@@ -1,5 +1,4 @@
 import { useRef, useCallback, useState } from 'react';
-// @ts-ignore
 import Quagga from 'quagga';
 
 // Declare global BarcodeDetector for native API
@@ -171,87 +170,8 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
     return detectionLoop;
   }, [config.debounceMs, config.pauseAfterScanMs, state.lastScanTime]);
 
-  // Enhanced pattern detection fallback
-  const initPatternDetection = useCallback((
-    videoElement: HTMLVideoElement,
-    canvasElement: HTMLCanvasElement,
-    onScanSuccess: (barcode: string) => void
-  ) => {
-    const context = canvasElement.getContext('2d');
-    if (!context) {
-      throw new Error('Canvas context not available');
-    }
-
-    const analyzeFrame = () => {
-      if (!videoElement.videoWidth || !videoElement.videoHeight) {
-        return;
-      }
-
-      canvasElement.width = videoElement.videoWidth;
-      canvasElement.height = videoElement.videoHeight;
-      context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-      
-      const imageData = context.getImageData(0, 0, canvasElement.width, canvasElement.height);
-      const isBarcodeLike = analyzeForBarcodePattern(imageData);
-      
-      if (isBarcodeLike) {
-        const now = Date.now();
-        if (now - state.lastScanTime < 1500) { // 1500ms for pattern detection
-          return;
-        }
-        
-        // Stop detection immediately
-        if (detectionTimeoutRef.current) {
-          clearInterval(detectionTimeoutRef.current);
-          detectionTimeoutRef.current = null;
-        }
-        
-        setState(prev => ({ ...prev, lastScanTime: now }));
-        onScanSuccess(`PATTERN_DETECTED_${Date.now()}`);
-      }
-    };
-
-    // Start pattern detection with 500ms intervals - slower for easier positioning
-    const detectionLoop = setInterval(analyzeFrame, 500);
-    detectionTimeoutRef.current = detectionLoop;
-    
-    return detectionLoop;
-  }, [config.pauseAfterScanMs, state.lastScanTime]);
-
-  // Pattern analysis algorithm
-  const analyzeForBarcodePattern = (imageData: ImageData) => {
-    const { width, height, data } = imageData;
-    const centerX = Math.floor(width / 2);
-    const centerY = Math.floor(height / 2);
-    const sampleRadius = Math.min(width, height) / 4;
-    
-    let darkPixels = 0;
-    let lightPixels = 0;
-    let totalSampled = 0;
-    
-    // Sample in a grid pattern around center
-    for (let y = centerY - sampleRadius; y < centerY + sampleRadius; y += 5) {
-      for (let x = centerX - sampleRadius; x < centerX + sampleRadius; x += 5) {
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-          const index = (y * width + x) * 4;
-          const brightness = (data[index] + data[index + 1] + data[index + 2]) / 3;
-          
-          if (brightness < 128) {
-            darkPixels++;
-          } else {
-            lightPixels++;
-          }
-          totalSampled++;
-        }
-      }
-    }
-    
-    const darkRatio = darkPixels / totalSampled;
-    const lightRatio = lightPixels / totalSampled;
-    
-    // Basic pattern detection: need significant contrast
-    return darkRatio > 0.2 && lightRatio > 0.2 && Math.abs(darkRatio - lightRatio) > 0.1;
-  };
+  // Note: Pattern detection fallback has been removed as it cannot read actual barcode values
+  // If both QuaggaJS and BarcodeDetector fail, we'll throw an error to suggest manual input
 
   // Start enhanced scanner with fallback chain
   const startScanner = useCallback(async (
@@ -343,14 +263,9 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         console.log('Scanner initialized with BarcodeDetector');
         return;
       } catch (detectorError) {
-        console.warn('BarcodeDetector failed, using pattern detection:', detectorError);
+        console.warn('BarcodeDetector also failed:', detectorError);
+        throw new Error('Camera does not support barcode scanning. Please use manual input instead.');
       }
-      
-      // Final fallback to pattern detection
-      initPatternDetection(videoElement, canvasElement, onScanSuccess);
-      scannerRef.current = 'pattern';
-      setState(prev => ({ ...prev, isInitialized: true }));
-      console.log('Scanner initialized with pattern detection');
       
     } catch (error) {
       console.error('All scanner methods failed:', error);
@@ -363,7 +278,7 @@ export function useEnhancedBarcodeScanner(config: EnhancedScannerConfig = {
         onScanError('Scanner initialization failed');
       }
     }
-  }, [initQuagga, initBarcodeDetector, initPatternDetection]);
+  }, [initQuagga, initBarcodeDetector]);
 
   // Stop scanner and cleanup
   const stopScanner = useCallback(() => {
